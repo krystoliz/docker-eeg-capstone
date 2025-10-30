@@ -1,0 +1,7 @@
+kafka-python
+requests
+numpy
+scipy
+pandas
+scikit-learn
+xgboost
