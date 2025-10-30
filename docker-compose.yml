@@ -1,0 +1,70 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  simulator:
+    build: 
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: simulator
+    depends_on:
+      - kafka
+    restart: on-failure
+
+  analyzer:
+    build: 
+      context: ./analyzer
+      dockerfile: Dockerfile
+    container_name: analyzer
+    depends_on:
+      - kafka
+      - fastapi_backend
+    restart: on-failure
+
+  fastapi_backend:
+    build: ./fastapi_backend
+    container_name: fastapi_backend
+    env_file:
+      - ./auth_backend/.env # This file now provides JWT_SECRET and MONGO_URI
+    ports:
+      - "8000:8000"
+    depends_on:
+      - kafka # Add this to be safe, though not strictly required
+    restart: on-failure
+  
+  # --- NEW (Phase 3) ---
+  auth_backend:
+    build: ./auth_backend
+    container_name: auth_backend
+    env_file:
+      - ./auth_backend/.env
+    ports:
+      - "8001:8001"
+    restart: on-failure
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - fastapi_backend
+      - auth_backend
+    restart: on-failure
