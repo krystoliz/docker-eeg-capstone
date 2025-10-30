@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+python-multipart
+PyJWT # For decoding JWTs
+python-dotenv # For reading the .env file
+pymongo
