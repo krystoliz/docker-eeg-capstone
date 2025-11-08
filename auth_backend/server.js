@@ -27,8 +27,9 @@ mongoose.connect(MONGO_URI)
   process.exit(1);
 });
 
-// --- User Model (Unchanged) ---
+// --- User Model ---
 const UserSchema = new mongoose.Schema({
+  fullName: { type: String, required: true }, // <-- ADD THIS LINE
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
@@ -83,47 +84,55 @@ const authMiddleware = (req, res, next) => {
 
 // 1. Register
 app.post('/auth/register', async (req, res) => {
-  // ... (same as before, no changes)
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    const { email, password, fullName } = req.body; // <-- ADD fullName
+    if (!email || !password || !fullName) { // <-- ADD fullName
+      return res.status(400).json({ message: 'Full name, email, and password are required' }); // <-- UPDATE MESSAGE
     }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = new User({ email, password: hashedPassword });
+
+    const newUser = new User({ email, password: hashedPassword, fullName }); // <-- ADD fullName
     await newUser.save();
+
     res.status(201).json({ message: 'User created successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-
 // 2. Login
 app.post('/auth/login', async (req, res) => {
-  // ... (same as before, no changes)
   try {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+
+    // PRD: Issue JWT Token
     const token = jwt.sign(
-      { userId: user._id, email: user.email }, // Note: we've had userId here all along!
+      // --- ADD fullName to the token payload ---
+      { userId: user._id, email: user.email, fullName: user.fullName },
+      // ----------------------------------------
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '1h' } // Token expires in 1 hour
     );
+
     res.status(200).json({ token });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
