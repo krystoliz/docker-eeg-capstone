@@ -7,15 +7,22 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // --- FONT CONFIGURATION ---
+      fontFamily: {
+        // The default font (replaces standard sans)
+        sans: ['var(--font-inter)', 'sans-serif'],
+        // Your custom fonts
+        logo: ['var(--font-abril)', 'cursive'],
+        subtitle: ['var(--font-aref)', 'serif'],
+      },
+      // --------------------------
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
-      // --- ADDING THE COLORS ---
-      // (Please replace these with your actual design colors)
       colors: {
-        'primary': '#1E3A8A', 
+        'primary': '#1E3A8A',
         'primary-dark': '#172554',
         'secondary': '#93C5FD',
         'background': '#F0F4F8',

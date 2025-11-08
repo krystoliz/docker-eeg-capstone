@@ -13,7 +13,7 @@ export default function LandingPage() {
       <nav className="flex justify-between items-center px-8 py-4 bg-[#404A99]/50 backdrop-blur-md shadow-lg fixed w-full top-0 z-50 border-b border-white/10">
         <div className="flex items-center gap-3">
           <img src="/affectra.png" alt="Affectra Logo" className="w-10 h-10" />
-          <h1 className="text-2xl font-bold tracking-wide bg-gradient-to-r from-[#A0B4FF] to-[#FFD84D] text-transparent bg-clip-text">
+          <h1 className="font-logo text-2xl font-bold tracking-wide bg-gradient-to-r from-[#A0B4FF] to-[#FFD84D] text-transparent bg-clip-text">
             AFFECTRA
           </h1>
         </div>
