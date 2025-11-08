@@ -1,7 +1,9 @@
 // src/app/dashboard/components/emositerakhir.js
 "use client";
-
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useMemo } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useAuth } from "@/context/AuthContext";
+// import { motion } from "framer-motion";
 
 /*
   Komponen EmosiTerakhir — menampilkan emosi terakhir terdeteksi dari EEG.
@@ -19,55 +21,64 @@ export default function EmosiTerakhir({ emotion, time, date, firstName }) {
     visible: { opacity: 1, y: 0 },
   };
 
+  // --- WIRING START ---
+  const [emotionData, setEmotionData] = useState(null);
+  const { token } = useAuth();
+  // 1. Setup WebSocket URL with token
+  const websocketUrl = useMemo(() => {
+    return token ? `ws://localhost:8000/ws?token=${token}` : null;
+  }, [token]);
+
+  // 2. Connect to WebSocket
+  const { lastMessage, readyState } = useWebSocket(websocketUrl, {
+    shouldReconnect: () => true,
+  });
+
+  // 3. Listen for incoming messages
+  useEffect(() => {
+    if (lastMessage !== null) {
+      const data = JSON.parse(lastMessage.data);
+      setEmotionData(data);
+    }
+  }, [lastMessage]);
+
+  // 4. Dynamic Styling based on emotion
+  let bgColor = "bg-[#E3E7FF]"; // Default (Neutral/Waiting) - matches your design's soft blue
+  let emotionText = "Menunggu...";
+
+  if (readyState !== ReadyState.OPEN) {
+     emotionText = "Menghubungkan...";
+  } else if (emotionData) {
+    const emotion = emotionData.classified_emotion;
+    if (emotion === "Positive") {
+      bgColor = "bg-[#D1FAE5]"; // Soft Green
+      emotionText = "Positif";
+    } else if (emotion === "Negative") {
+      bgColor = "bg-[#FEE2E2]"; // Soft Red
+      emotionText = "Negatif";
+    } else {
+       bgColor = "bg-[#E3E7FF]"; // Soft Blue for Neutral
+       emotionText = "Netral";
+    }
+  }
+  // --- WIRING END ---
   return (
-    <motion.div
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-      transition={{ duration: 0.35 }}
-    >
-      <h3 className="text-[#2D3570] font-semibold mb-3 text-lg">
-        Emosi Terakhir Terdeteksi
-      </h3>
-      <div className="bg-white rounded-2xl shadow p-5">
-        <div className="border border-[#E0E5F5] rounded-xl p-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={
-                  emotion === "Positif"
-                    ? "/positif.png"
-                    : emotion === "Negatif"
-                    ? "/negatif.png"
-                    : "/netral.png"
-                }
-                alt={`Emosi ${emotion}`}
-                className="w-14 h-14 sm:w-16 sm:h-16 object-contain"
-              />
-              <div>
-                <p className="text-[#2D3570] text-sm font-semibold">Emosi</p>
-                <p className="text-[#FFD84D] text-base font-bold -mt-1">
-                  {emotion}
-                </p>
-              </div>
-            </div>
-            <div className="text-right text-sm text-[#2D3570]">
-              <p>
-                <span className="font-semibold">Waktu</span> {time}
-              </p>
-              <p>
-                <span className="font-semibold">Tanggal</span> {date}
-              </p>
-            </div>
-          </div>
-
-          <hr className="border-t border-[#E0E5F5] my-3" />
-
-          <p className="text-[#2D3570] font-medium text-center">
-            Halo, {firstName}!
-          </p>
-        </div>
+    
+    <div className={`rounded-[30px] p-8 shadow-sm ${bgColor} transition-all duration-500 flex flex-col justify-between min-h-[220px]`}>
+      <div>
+        <h2 className="font-bold text-xl text-[#12225B]">Emosi Terakhir</h2>
+        <p className="text-[#12225B] opacity-60 text-sm mt-1">
+          {/* Show today's date in Indonesian format */}
+          {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
       </div>
-    </motion.div>
+      
+      <div>
+        <h3 className="text-5xl font-extrabold text-[#12225B] tracking-tight">
+          {emotionText}
+        </h3>
+      </div>
+    </div>
   );
+
 }
