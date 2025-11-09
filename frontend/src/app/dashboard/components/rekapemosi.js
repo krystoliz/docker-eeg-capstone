@@ -1,17 +1,53 @@
 "use client";
-import React from 'react';
 // --- ENSURE TOOLTIP IS IMPORTED HERE ---
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 // ---------------------------------------
+import {useAuth} from "@/context/AuthContext";
+import React, { useEffect, useState } from 'react';
 
 const RekapEmosi = () => {
-  // Dummy data to match your design colors for now
-  const data = [
-    { name: 'Positif', value: 45, color: '#A7D7C5' }, // Soft Green
-    { name: 'Negatif', value: 20, color: '#F5A9A9' }, // Soft Red
-    { name: 'Netral', value: 35, color: '#B8C0EC' },  // Soft Blue
-  ];
+  // --- WIRING START ---
+  const { token } = useAuth();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (token) {
+      fetchHistoryData();
+    }
+  }, [token]);
+
+  const fetchHistoryData = async () => {
+    try {
+      const res = await axios.get('http://localhost:8001/auth/history', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      processChartData(res.data);
+    } catch (err) {
+      console.error("Failed to fetch history for chart:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const processChartData = (historyData) => {
+    const counts = { Positive: 0, Negative: 0, Neutral: 0 };
+    historyData.forEach(item => {
+      // Ensure we match the exact string from the backend
+      if (counts[item.classified_emotion] !== undefined) {
+        counts[item.classified_emotion]++;
+      }
+    });
+
+    const formattedData = [
+      { name: 'Positif', value: counts.Positive, color: '#A7D7C5' },
+      { name: 'Negatif', value: counts.Negative, color: '#F5A9A9' },
+      { name: 'Netral', value: counts.Neutral, color: '#B8C0EC' },
+    ].filter(item => item.value > 0);
+
+    setData(formattedData);
+  };
+  // --- WIRING END ---
   // Custom Legend to match screenshot (on the right side)
   const renderLegend = (props) => {
     const { payload } = props;
@@ -37,13 +73,16 @@ const RekapEmosi = () => {
          </select>
       </div>
       
-      <div className="flex-1 w-full min-h-0 flex items-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="40%" // Moved chart slightly left to make room for legend
-              cy="50%"
+      <div className="flex-1 w-full min-h-0 flex items-center justify-center">
+        {loading ? (
+          <p className="text-gray-400 text-sm italic">Memuat data...</p>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="40%" // Moved chart slightly left to make room for legend
+                cy="50%"
               innerRadius={50} // Makes it a doughnut chart
               outerRadius={70}
               paddingAngle={5}
@@ -66,9 +105,9 @@ const RekapEmosi = () => {
             />
           </PieChart>
         </ResponsiveContainer>
-      </div>
+      )}
+    </div>
     </div>
   );
 };
-
 export default RekapEmosi;
