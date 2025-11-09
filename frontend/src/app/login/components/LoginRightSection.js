@@ -1,141 +1,112 @@
 "use client";
+// --- ENSURE THIS LINE HAS { useState } ---
 import React, { useState } from "react";
+// ----------------------------------------
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import LoadingOverlay from "./LoadingOverlay";
-import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
-
-// --- Our Imports ---
+import { FaUser, FaLock, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
-// -----------------
 
 const LoginRightSection = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // --- Our Logic ---
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, error } = useAuth(); // Get login function and error state
-  // const router = useRouter(); // We don't need this, AuthContext handles redirect
-  // -----------------
+  const { login, error } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    // --- Replace simulation with real login ---
     await login(email, password);
-    // ----------------------------------------
-    
     setLoading(false);
-    // Redirect is now handled by the 'login' function in AuthContext
   };
 
   return (
     <form
-      className="w-full lg:w-1/2 p-8 sm:p-12 md:p-16 flex flex-col justify-center items-center relative"
-      onSubmit={handleLogin} // This now calls our new function
+      className="w-full lg:w-1/2 p-8 sm:p-12 md:p-16 flex flex-col justify-center items-center relative bg-white"
+      onSubmit={handleLogin}
     >
       {loading && <LoadingOverlay />}
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <Image
-            src="/affectra.png"
-            alt="Affectra Logo"
-            width={150}
-            height={150}
-          />
-        </div>
-        <h2 className="text-3xl font-bold mb-4 text-center">Login</h2>
-        <p className="text-gray-600 mb-8 text-center">
-          Selamat datang kembali! Silakan masukkan kredensial Anda.
+      <div className="w-full max-w-sm">
+        <h2 className="text-4xl font-extrabold mb-2 text-[#12225B] text-left">
+          Halo, Yuk masuk dulu!
+        </h2>
+        <p className="text-gray-600 mb-8 text-left">
+          Masuk ke akunmu untuk mulai melacak emosi.
         </p>
         
-        {/* --- Display Error Message --- */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
             <span className="block sm:inline">{error}</span>
           </div>
         )}
-        {/* ----------------------------- */}
 
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="email"
-          >
-            Email
-          </label>
+        {/* Email Input Field */}
+        <div className="mb-4 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FaUser className="text-gray-400" />
+          </div>
           <input
-            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="shadow appearance-none border border-gray-300 rounded-lg w-full py-3 pl-10 pr-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             id="email"
             type="email"
-            placeholder="Masukkan email"
-            // --- Connect to state ---
+            placeholder="jhon@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            // --------------------
           />
         </div>
-        <div className="mb-6 relative">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="password"
-          >
-            Password
-          </label>
+
+        {/* Password Input Field */}
+        <div className="mb-2 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FaLock className="text-gray-400" />
+          </div>
           <input
-            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+            className="shadow appearance-none border border-gray-300 rounded-lg w-full py-3 pl-10 pr-10 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             id="password"
             type={showPassword ? "text" : "password"}
-            placeholder="Masukkan password"
-            // --- Connect to state ---
+            placeholder="••••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            // --------------------
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 top-7 pr-3 flex items-center text-gray-600"
+            className="absolute inset-y-0 right-0 top-0 h-full pr-3 flex items-center text-gray-600"
           >
             {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
           </button>
         </div>
-        <div className="flex items-center justify-between mb-6">
-          <label className="flex items-center text-gray-600 text-sm">
-            <input
-              className="mr-2 leading-tight"
-              type="checkbox"
-            />
-            Ingat saya
-          </label>
+
+        <div className="flex justify-end mb-6">
           <Link
             href="/forgotpassword"
-            className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
+            className="inline-block align-baseline font-semibold text-sm text-[#12225B] hover:text-blue-800"
           >
-            Lupa Password?
+            Lupa kata sandi?
           </Link>
         </div>
+
         <div className="flex flex-col items-center">
           <button
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="w-full bg-[#12225B] hover:bg-[#0c1844] text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline"
             type="submit"
-            disabled={loading} // Disable button while loading
+            disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Masuk..." : "Masuk"}
           </button>
+          
           <p className="text-gray-600 text-sm mt-4">
             Belum punya akun?{" "}
             <Link
               href="/register"
-              className="font-bold text-blue-500 hover:text-blue-800"
+              className="font-bold text-[#12225B] hover:text-blue-800"
             >
-              Daftar di sini
+              Daftar
             </Link>
           </p>
         </div>
