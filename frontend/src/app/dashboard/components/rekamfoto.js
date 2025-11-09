@@ -1,42 +1,62 @@
 "use client";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-
+import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useAuth } from "@/context/AuthContext";
+import axios from 'axios';
 // Komponen RekamFoto — menampilkan foto terbaru hasil deteksi EEG
-export default function RekamFoto({ latestEmotion, onPhotoUpdate }) {
-  const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
-  const [photo, setPhoto] = useState("/flowers.png");
+const RekamFoto = () => {
+  const { token } = useAuth();
+  const [hasSession, setHasSession] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // simulasi update real-time tiap 10 detik
   useEffect(() => {
-    const updatePhoto = () => {
-      // nanti diganti real EEG capture
-      setPhoto("/flowers.png");
-      if (onPhotoUpdate) onPhotoUpdate("/flowers.png");
-    };
+    if (token) {
+      checkHistory();
+    }
+  }, [token]);
 
-    updatePhoto(); // initial render
-    const interval = setInterval(updatePhoto, 10000);
-    return () => clearInterval(interval);
-  }, [onPhotoUpdate]);
+  const checkHistory = async () => {
+    try {
+      // We just need to know if ANY history exists to show a photo
+      const res = await axios.get('http://localhost:8001/auth/history', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data && res.data.length > 0) {
+        setHasSession(true);
+      }
+    } catch (err) {
+      console.error("Failed to check history for photo:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <motion.div
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-      transition={{ duration: 0.35, delay: 0.05 }}
-    >
-      <h3 className="text-[#2D3570] font-semibold mb-3 text-lg">
-        Hasil Rekaman Foto
-      </h3>
-      <div className="bg-white rounded-2xl shadow p-5">
-        <img
-          src={photo}
-          alt={`Foto terbaru - Emosi: ${latestEmotion || "Netral"}`}
-          className="w-full h-40 sm:h-48 object-cover rounded-xl"
-        />
+    <div className="bg-white rounded-[30px] p-6 shadow-sm flex flex-col lg:col-span-4">
+      <h2 className="font-bold text-xl text-[#12225B] mb-4">Hasil Rekaman Foto</h2>
+      
+      <div className="flex-1 flex items-center justify-center min-h-[200px] bg-[#F5F7FB] rounded-3xl overflow-hidden relative">
+        {loading ? (
+           <p className="text-gray-400 text-sm italic">Memuat...</p>
+        ) : hasSession ? (
+           // --- PLACEHOLDER IMAGE ---
+           // Since we don't have real photo capture yet, we use a static image
+           // to simulate what it would look like.
+           <Image
+             src="/stasiun.jpeg" // Make sure this image exists in your public folder!
+             alt="Rekaman Foto"
+             fill
+             className="object-cover"
+           />
+           // -------------------------
+        ) : (
+           <div className="text-center px-4">
+             <p className="text-gray-400 text-sm italic">Belum ada sesi terekam.</p>
+           </div>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
-}
+};
+
+export default RekamFoto;
