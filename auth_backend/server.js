@@ -62,6 +62,14 @@ const EmotionDataSchema = new mongoose.Schema({
 });
 const EmotionData = mongoose.model('EmotionData', EmotionDataSchema);
 
+// --- NEW: Note Model ---
+const NoteSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  noteContent: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+const Note = mongoose.model('Note', NoteSchema);
+
 // --- NEW (Phase 5): Auth Middleware ---
 // A simple middleware to protect our new route
 const authMiddleware = (req, res, next) => {
@@ -157,6 +165,57 @@ app.get('/auth/history', authMiddleware, async (req, res) => {
   }
 });
 
+// --- NEW: Notes Routes ---
+
+// GET: Fetch all notes for the current user
+app.get('/notes', authMiddleware, async (req, res) => {
+  try {
+    // Find notes belonging to this user, sorted newest first
+    const notes = await Note.find({ userId: req.user.userId }).sort({ createdAt: -1 });
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// POST: Create a new note
+app.post('/notes', authMiddleware, async (req, res) => {
+  try {
+    const { noteContent } = req.body;
+    if (!noteContent) {
+      return res.status(400).json({ message: 'Note content is required' });
+    }
+
+    const newNote = new Note({
+      userId: req.user.userId,
+      noteContent
+    });
+    await newNote.save();
+    
+    // Return the saved note (including its new _id)
+    res.status(201).json(newNote);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// DELETE: Remove a specific note
+app.delete('/notes/:id', authMiddleware, async (req, res) => {
+  try {
+    // Ensure the user can only delete their OWN notes
+    const note = await Note.findOneAndDelete({ 
+      _id: req.params.id, 
+      userId: req.user.userId 
+    });
+
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found or unauthorized' });
+    }
+    res.json({ message: 'Note deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 
 // --- Start Server ---
 const PORT = process.env.PORT || 8001;
