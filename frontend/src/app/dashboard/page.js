@@ -48,16 +48,18 @@ export default function Dashboard() {
         </header>
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            {/* --- THIS IS THE NEXT STEP --- */}
-            {/* We will wire this up in Phase 4 */}
-            <EmosiTerakhir />
-            {/* --------------------------- */}
+            {/* Top row: EmosiTerakhir, RekapEmosi, RekamFoto */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 col-span-3">
+              <EmosiTerakhir />
+              <RekapEmosi />
+              <div className="h-[180px]">
+                <RekamFoto />
+              </div>
+            </div>
 
-            <RekapEmosi />
+            {/* Remaining cards */}
             <RiwayatSesi />
             <CatatanAnda />
-            <RekamFoto />
           </div>
         </main>
       </div>
