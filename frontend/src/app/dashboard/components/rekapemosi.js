@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 // ---------------------------------------
 import {useAuth} from "@/context/AuthContext";
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const RekapEmosi = () => {
   // --- WIRING START ---
