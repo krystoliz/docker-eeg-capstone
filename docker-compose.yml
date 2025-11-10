@@ -68,3 +68,10 @@ services:
       - fastapi_backend
       - auth_backend
     restart: on-failure
+
+  image_api:
+    build: ./image_api
+    volumes:
+      - ./images:/app/images
+    ports:
+      - "8003:8000"
