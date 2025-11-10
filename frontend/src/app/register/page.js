@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import RegisterLeftSection from "./components/RegisterLeftSection";
 import RegisterRightSection from "./components/RegisterRightSection";
+import LoadingOverlay from "./components/LoadingOverlay";
 
 // --- Our Imports ---
 import { useAuth } from "@/context/AuthContext";

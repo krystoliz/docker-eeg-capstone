@@ -6,6 +6,7 @@ import Link from "next/link";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 
 import { useAuth } from "@/context/AuthContext";
+import LoadingOverlay from "./LoadingOverlay";
 
 const RegisterRightSection = () => {
   const [showPassword, setShowPassword] = useState(false);
