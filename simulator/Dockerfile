@@ -8,4 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY eeg_lib /app/eeg_lib 
 COPY producer.py .
 
+COPY dataset_adapted.csv /app/simulator/
+ENV GENERATOR_MODE=feature
+
 CMD ["python", "producer.py"]

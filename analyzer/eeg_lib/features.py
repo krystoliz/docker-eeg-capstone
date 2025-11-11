@@ -101,3 +101,22 @@ feature_order = [
     "delta_asymmetry", "theta_asymmetry", "alpha_asymmetry", "beta_asymmetry", "gamma_asymmetry",
     "cov_12", "eig_cov1", "eig_cov2"
 ]
+
+
+# --- 4. FEATURE-SPACE GENERATOR ---
+
+def load_feature_stats(path='dataset_adapted.csv'):
+    """Load per-label means and stds from a real dataset."""
+    df = pd.read_csv(path)
+    df = df.drop(columns=['label', 'ch_corr_mean'], errors='ignore')
+    labels = pd.read_csv(path)['label']
+    means = df.copy()
+    means['label'] = labels
+    stds = means.groupby('label').std()
+    means = means.groupby('label').mean()
+    return means, stds
+
+def generate_synthetic_features(label, means, stds):
+    """Generate one synthetic feature vector conditioned on a target label."""
+    row = np.random.normal(loc=means.loc[label], scale=stds.loc[label])
+    return row.to_dict()

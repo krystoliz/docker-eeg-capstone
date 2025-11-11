@@ -2,8 +2,11 @@ import time
 import json
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
-from eeg_lib.features import simulate_eeg_pair # <-- Import your function
+# from eeg_lib.features import simulate_eeg_pair # <-- Import your function
+from eeg_lib.features import simulate_eeg_pair, generate_synthetic_features, load_feature_stats, feature_order
 
+import os
+GENERATOR_MODE = os.getenv('GENERATOR_MODE', 'signal')  # 'signal' or 'feature'
 
 TOPIC_NAME = 'eeg_signals'
 KAFKA_SERVER = 'kafka:9092'
@@ -13,6 +16,13 @@ SIMULATION_DURATION = 6.0 # 6 second epoch
 print(f"Connecting to Kafka broker at {KAFKA_SERVER}...")
 
 producer = None
+
+if GENERATOR_MODE == 'feature':
+    print("Loading feature statistics for synthetic generation...")
+    means, stds = load_feature_stats('simulator/dataset_adapted.csv')
+    label_cycle = ['NEGATIVE', 'NEUTRAL', 'POSITIVE']
+    label_index = 0
+
 for _ in range(10):
     try:
         producer = KafkaProducer(
@@ -31,24 +41,29 @@ if not producer:
 print(f"Starting to send {SIMULATION_DURATION}s epochs to topic '{TOPIC_NAME}'...")
 try:
     while True:
-        # 1. Generate a 6-second, 2-channel epoch
-        t, ch1, ch2 = simulate_eeg_pair(sr=SIMULATION_SR, duration=SIMULATION_DURATION)
-        
-        # 2. Package the raw data for Kafka
-        # We send the raw lists, not single values
-        data = {
-            'channel_1': ch1,
-            'channel_2': ch2,
-            'sr': SIMULATION_SR,
-            'timestamp': time.time()
-        }
+        if GENERATOR_MODE == 'signal':
+            # Signal-based simulation
+            t, ch1, ch2 = simulate_eeg_pair(sr=SIMULATION_SR, duration=SIMULATION_DURATION)
+            data = {
+                'channel_1': ch1,
+                'channel_2': ch2,
+                'sr': SIMULATION_SR,
+                'timestamp': time.time()
+            }
+        else:
+            # Feature-space generation
+            label = label_cycle[label_index % len(label_cycle)]
+            label_index += 1
+            feats = generate_synthetic_features(label, means, stds)
+            data = {
+                'synthetic_features': {k: feats[k] for k in feature_order},
+                'sr': SIMULATION_SR,
+                'timestamp': time.time()
+            }
 
-        # 3. Send the entire epoch as one message
         producer.send(TOPIC_NAME, value=data)
         producer.flush()
-        print(f"Sent epoch with {len(ch1)} samples.")
-
-        # 4. Wait for the duration of the epoch to send the next one
+        print(f"Sent {'features' if GENERATOR_MODE=='feature' else 'epoch'} at {data['timestamp']}")
         time.sleep(SIMULATION_DURATION)
 
 except KeyboardInterrupt:

@@ -64,13 +64,18 @@ try:
     for message in consumer:
         # 1. Get the epoch data
         epoch_data = message.value
-        ch1 = epoch_data['channel_1']
-        ch2 = epoch_data['channel_2']
-        sr = epoch_data['sr']
-        
-        # 2. Run feature extraction
-        print(f"Received epoch. Running feature extraction...")
-        features_dict = extract_features(ch1, ch2, sr=sr)
+        if 'synthetic_features' in epoch_data:
+            print("Received synthetic feature vector. Skipping signal extraction...")
+            features_dict = epoch_data['synthetic_features']
+            sr = epoch_data.get('sr', 256)  # fallback if not present
+            num_samples = None
+        else:
+            print("Received raw signal. Running feature extraction...")
+            ch1 = epoch_data['channel_1']
+            ch2 = epoch_data['channel_2']
+            sr = epoch_data['sr']
+            features_dict = extract_features(ch1, ch2, sr=sr)
+            num_samples = len(ch1)
         
         # 3. Create DataFrame for prediction
         # Create a single row DataFrame, ensuring the column order
@@ -88,10 +93,11 @@ try:
         # 5. Package data for the frontend
         classified_data = {
             'original_data': {
-                 'timestamp': epoch_data['timestamp'],
-                 'sr': sr,
-                 'num_samples': len(ch1)
-            },
+            'timestamp': epoch_data['timestamp'],
+            'sr': sr,
+            'num_samples': num_samples if num_samples is not None else "synthetic"
+                },
+
             'classified_emotion': emotion, # This is now "Negative", "Neutral", or "Positive"
             'analysis_timestamp': time.time(),
             'key_features': {
