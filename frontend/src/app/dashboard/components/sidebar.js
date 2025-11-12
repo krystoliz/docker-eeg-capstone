@@ -1,90 +1,137 @@
 "use client";
-import React from "react";
-import Link from "next/link";
-import Image from "next/image";
 
-// --- THIS IS THE FIX ---
-import {
-  FaTachometerAlt,
-  FaFileAlt,
-  FaCog,
-  FaSignOutAlt,
-} from "react-icons/fa";
-// -----------------------
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { FaChartPie, FaHistory, FaStickyNote, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
 
-import { useAuth } from "@/context/AuthContext";
-import { useRouter, usePathname } from "next/navigation";
-
-const Sidebar = () => {
-  const { user, logout } = useAuth();
+export default function Sidebar({ active, setActive }) {
   const router = useRouter();
-  const pathname = usePathname();
+  const [userName, setUserName] = useState("User");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const handleLogout = (e) => {
-    e.preventDefault();
-    logout();
+  // Ambil nama lengkap dari localStorage, ambil nama depan saja
+  useEffect(() => {
+    const storedName = localStorage.getItem("userFullName");
+    if (storedName) {
+      const firstName = storedName.split(" ")[0];
+      setUserName(firstName);
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userFullName");
+    setShowLogoutConfirm(false);
+    router.push("/login");
   };
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: FaTachometerAlt },
-    { name: "Riwayat Sesi", href: "/dashboard/riwayatdetail", icon: FaFileAlt },
-    { name: "Pengaturan", href: "/dashboard/pengaturan", icon: FaCog },
-  ];
-
   return (
-    <div className="w-64 bg-white shadow-md flex flex-col">
-      <div className="p-4 flex items-center justify-center border-b">
-        <Image
-          src="/affectralengkap.png"
-          alt="Affectra Logo"
-          width={150}
-          height={40}
-        />
+    <motion.aside
+      initial={{ x: -40, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="w-full md:w-[250px] bg-[#F2F4FA] border-r border-gray-200 flex flex-col justify-between rounded-2xl shadow-sm p-5"
+    >
+      {/* Bagian atas - User info */}
+      <div>
+        <div className="flex items-center gap-3 mb-8">
+          <FaUserCircle className="text-4xl text-[#2D3570]" />
+          <div>
+            <span className="text-gray-600 text-sm">User</span>
+            <div className="bg-gray-200 px-3 py-1 rounded-lg mt-1 text-[#2D3570] font-semibold">
+              {userName}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigasi */}
+        <nav className="flex flex-col gap-3">
+          <button
+            onClick={() => setActive("rekap")}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${
+              active === "rekap"
+                ? "bg-[#2D3570] text-white"
+                : "text-[#2D3570] hover:bg-gray-200"
+            }`}
+          >
+            <FaChartPie />
+            Rekap Emosi
+          </button>
+
+          <button
+            onClick={() => setActive("riwayat")}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${
+              active === "riwayat"
+                ? "bg-[#2D3570] text-white"
+                : "text-[#2D3570] hover:bg-gray-200"
+            }`}
+          >
+            <FaHistory />
+            Riwayat Sesi
+          </button>
+
+          <button
+            onClick={() => setActive("catatan")}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${
+              active === "catatan"
+                ? "bg-[#2D3570] text-white"
+                : "text-[#2D3570] hover:bg-gray-200"
+            }`}
+          >
+            <FaStickyNote />
+            Catatan Anda
+          </button>
+        </nav>
       </div>
-      <div className="p-4 border-b">
-        <Image
-          src="/akun1.png"
-          alt="User Avatar"
-          width={50}
-          height={50}
-          className="rounded-full mx-auto"
-        />
-        <h3 className="text-center font-bold mt-2">
-          {user ? user.fullName : "Loading..."}
-        </h3>
-        <p className="text-center text-gray-500 text-sm">Pengguna</p>
-      </div>
-      <nav className="flex-1 p-4">
-        <ul>
-          {navItems.map((item) => (
-            <li key={item.name} className="mb-2">
-              <Link
-                href={item.href}
-                className={`flex items-center p-2 rounded ${
-                  pathname === item.href
-                    ? "bg-blue-100 text-blue-700":
-                    "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <item.icon className="mr-3" />
-                {item.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="p-4 border-t">
+
+      {/* Tombol Logout */}
+      <div className="mt-10">
         <button
-          onClick={handleLogout}
-          className="flex items-center p-2 w-full text-gray-600 hover:bg-gray-100 rounded"
+          onClick={() => setShowLogoutConfirm(true)}
+          className="flex items-center justify-center gap-2 text-red-600 font-medium bg-red-100 hover:bg-red-200 rounded-lg py-2 w-full transition"
         >
-          <FaSignOutAlt className="mr-3" />
-          Logout
+          <FaSignOutAlt />
+          Keluar
         </button>
+
+        {/* Popup konfirmasi logout */}
+        {showLogoutConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white rounded-2xl shadow-lg p-6 w-[90%] sm:w-[350px]"
+            >
+              <h2 className="text-lg font-semibold text-[#2D3570] mb-3">
+                Konfirmasi Keluar
+              </h2>
+              <p className="text-sm text-gray-600 mb-5">
+                Apakah Anda yakin ingin keluar dari akun ini?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-4 py-2 rounded-lg text-gray-600 bg-gray-200 hover:bg-gray-300 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition"
+                >
+                  Ya, Keluar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </div>
-    </div>
-    
+    </motion.aside>
   );
-};
-              
-export default Sidebar;
+}

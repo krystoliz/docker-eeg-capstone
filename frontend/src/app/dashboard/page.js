@@ -1,67 +1,81 @@
 "use client";
-import React, { useEffect } from "react";
-import Image from "next/image";
+
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import Sidebar from "./components/sidebar";
-import EmosiTerakhir from "./components/emositerakhir";
 import RekapEmosi from "./components/rekapemosi";
 import RiwayatSesi from "./components/riwayatsesi";
-import CatatanAnda from "./components/catatanaanda";
+import CatatanAnda from "./components/catatananda";
+import EmosiTerakhir from "./components/emositerakhir";
 import RekamFoto from "./components/rekamfoto";
 
-// --- Our Imports ---
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-// -----------------
+export default function DashboardPage() {
+  const [activeSection, setActiveSection] = useState("rekap");
+  const [userFullName, setUserFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
 
-export default function Dashboard() {
-  // --- Our Logic ---
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
+  // Ambil nama dari localStorage
   useEffect(() => {
-    // Redirect to login if not logged in
-    if (!loading && !user) {
-      router.push("/login");
+    const storedName = localStorage.getItem("userFullName");
+    if (storedName) {
+      setUserFullName(storedName);
+      const first = storedName.split(" ")[0];
+      setFirstName(first);
     }
-  }, [user, loading, router]);
+  }, []);
 
-  // Show loading screen while checking auth
-  if (loading || !user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
-  // -----------------
-
-  // User is logged in, show the dashboard
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex items-center">
-            {/* We will get the user from context in the Sidebar component */}
-          </div>
-        </header>
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Top row: EmosiTerakhir, RekapEmosi, RekamFoto */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 col-span-3">
-              <EmosiTerakhir />
-              <RekapEmosi />
-              <div className="h-[180px]">
-                <RekamFoto />
-              </div>
-            </div>
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#EEF1F8] font-sans">
+      {/* Sidebar */}
+      <div className="md:w-1/4 lg:w-1/5">
+        <Sidebar active={activeSection} setActive={setActiveSection} />
+      </div>
 
-            {/* Remaining cards */}
-            <RiwayatSesi />
-            <CatatanAnda />
+      {/* Main content */}
+      <div className="flex-1 flex flex-col p-5 md:p-8 gap-6 overflow-y-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <h1 className="text-2xl font-bold text-[#2D3570]">Dashboard</h1>
+            <p className="text-gray-600 text-sm mt-1">
+              Selamat datang kembali, <span className="font-medium">{firstName || "User"}</span> 👋
+            </p>
           </div>
-        </main>
+          <RekamFoto />
+        </motion.div>
+
+        {/* Konten dinamis */}
+        <motion.div
+          key={activeSection}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="grid grid-cols-1 xl:grid-cols-3 gap-6"
+        >
+          {/* Kolom kiri */}
+          <div className="flex flex-col gap-6 col-span-2">
+            {activeSection === "rekap" && (
+              <>
+                <EmosiTerakhir firstName={firstName} />
+                <RekapEmosi />
+              </>
+            )}
+            {activeSection === "riwayat" && <RiwayatSesi />}
+            {activeSection === "catatan" && <CatatanAnda />}
+          </div>
+
+          {/* Kolom kanan */}
+          <div className="flex flex-col gap-6">
+            {activeSection !== "rekap" && (
+              <EmosiTerakhir firstName={firstName} />
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -1,33 +1,47 @@
-import React from 'react';
-import { FaFileAlt } from "react-icons/fa";
+"use client";
 
-// Use default values in destructuring to prevent crashes
-const RiwayatSesiItem = ({ title = 'Sesi', date = '-', emotion = 'Netral' }) => {
-  
-  const getBadgeStyle = (emo) => {
-    // Ensure emo is a string to prevent .toLowerCase() crashes if undefined
-    const safeEmo = (emo || 'Netral').toString();
-    switch (safeEmo) {
-      case 'Positif': return 'bg-[#D1FAE5] text-[#065F46]'; // Green
-      case 'Negatif': return 'bg-[#FEE2E2] text-[#991B1B]'; // Red
-      default: return 'bg-[#E0E7FF] text-[#3730A3]';       // Blue/Neutral
-    }
+import React from "react";
+import { motion } from "framer-motion";
+import { FaSmile, FaMeh, FaFrown } from "react-icons/fa";
+
+export default function RiwayatSesiItem({ session }) {
+  const emotionColor = {
+    Positif: "text-green-600",
+    Netral: "text-yellow-600",
+    Negatif: "text-red-600",
+  };
+
+  const emotionIcon = {
+    Positif: <FaSmile className="text-green-500 text-lg" />,
+    Netral: <FaMeh className="text-yellow-500 text-lg" />,
+    Negatif: <FaFrown className="text-red-500 text-lg" />,
   };
 
   return (
-    <div className="flex items-center p-3 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer">
-      <div className="w-12 h-12 bg-[#E3E7FF] rounded-xl flex items-center justify-center mr-4">
-        <FaFileAlt className="text-[#12225B] text-xl" />
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="flex justify-between items-center bg-[#F5F7FB] border border-gray-200 rounded-xl px-4 py-3 text-sm hover:shadow-md transition"
+    >
+      <div className="flex flex-col">
+        <span className="font-medium text-[#2D3570]">
+          {new Date(session.created_at).toLocaleString("id-ID", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })}
+        </span>
+        {session.note && (
+          <span className="text-gray-500 mt-1 italic line-clamp-2">
+            “{session.note}”
+          </span>
+        )}
       </div>
-      <div className="flex-1">
-        <h4 className="font-bold text-[#12225B]">{title}</h4>
-        <p className="text-xs text-gray-500 mt-1">{date}</p>
-      </div>
-      <div className={`px-3 py-1 rounded-full text-xs font-bold ${getBadgeStyle(emotion)}`}>
-        {emotion}
-      </div>
-    </div>
-  );
-};
 
-export default RiwayatSesiItem;
+      <div className={`flex items-center gap-2 ${emotionColor[session.emotion] || "text-gray-600"}`}>
+        {emotionIcon[session.emotion] || <FaMeh className="text-gray-400" />}
+        <span className="font-medium">{session.emotion || "Tidak diketahui"}</span>
+      </div>
+    </motion.div>
+  );
+}
